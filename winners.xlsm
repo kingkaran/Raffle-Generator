@@ -1,0 +1,106 @@
+Sub Macro1()
+Dim nbRows As Integer
+Dim fillRows As Long
+Dim pastRows As Long
+Dim rand As Integer
+Dim randCheck As Integer
+Dim currDate As String
+Dim i As Integer
+Dim j As Integer
+Dim k As Integer
+Dim past As String
+Dim repeat As Boolean
+
+Sheets("Home").Activate
+nbRows = Cells(3, "C").Value
+Dim selected() As Integer
+past = Cells(4, "C").Value
+Rows(9 & ":" & Worksheets("Home").Rows.count).Delete
+Sheets("Input").Activate
+fillRows = Range("A" & Rows.count).End(xlUp).Row
+ReDim selected(nbRows)
+Range("A2:C" & fillRows).Sort key1:=Range("C2:C" & fillRows), _
+   order1:=xlAscending, Header:=xlNo
+Dim strt As Integer
+Dim finsh As Integer
+Dim count As Integer
+Dim err As String
+err = "Not enough employees in "
+
+count = 0
+strt = 2
+For k = 2 To fillRows
+    If Worksheets("Input").Cells(k, "C") <> Worksheets("Input").Cells(k + 1, "C") Then
+        finsh = k
+        pastRows = Worksheets("Past Winners").Range("A" & Rows.count).End(xlUp).Row
+        
+        For i = 2 To pastRows
+            If Worksheets("Input").Cells(finsh, "C") = Worksheets("Past Winners").Cells(i, "C") Then
+                count = count + 1
+            End If
+        Next i
+        If (finsh - strt + 1) < nbRows And past = "F" Then
+            nbRows = (finsh - strt + 1)
+            Worksheets("Home").Range("A" & Rows.count).End(xlUp).Offset(1) = err & Worksheets("Input").Cells(finsh, "C")
+        End If
+        If ((finsh - strt + 1) - count) < nbRows And past = "T" Then
+            nbRows = (finsh - strt + 1) - count
+            Worksheets("Home").Range("A" & Rows.count).End(xlUp).Offset(1) = err & Worksheets("Input").Cells(finsh, "C")
+        End If
+        
+        For i = 1 To nbRows
+            repeat = False
+            pastRows = Worksheets("Past Winners").Range("A" & Rows.count).End(xlUp).Row
+            Do While True
+Line:
+                rand = WorksheetFunction.RandBetween(strt, finsh)
+                If past = "F" Then
+Redirect:
+                    For j = 0 To nbRows - 1
+                        If rand = selected(j) Then
+                            GoTo Line
+                        End If
+                    Next j
+                    Exit Do
+                Else
+                    If pastRows < 2 Then
+                        GoTo Redirect
+                    End If
+                    For j = 2 To pastRows
+                        If Worksheets("Input").Cells(rand, "B") = Worksheets("Past Winners").Cells(j, "B") Then
+                            GoTo Line
+                        End If
+                    Next j
+                    For j = 0 To nbRows - 1
+                        If rand = selected(j) Then
+                            GoTo Line
+                        End If
+                    Next j
+                    Exit Do
+                End If
+            Loop
+            
+            selected(i - 1) = rand
+            Sheets("Input").Rows(rand).EntireRow.Copy
+            Sheets("Past Winners").Activate
+            Range("A" & Rows.count).End(xlUp).Offset(1).Select
+            ActiveSheet.Paste
+            currDate = Date
+            Range("D" & Rows.count).End(xlUp).Offset(1) = currDate
+            
+            Sheets("Home").Activate
+            Range("A" & Rows.count).End(xlUp).Offset(1).Select
+            ActiveSheet.Paste
+        Next i
+        strt = k + 1
+        count = 0
+        nbRows = Worksheets("Home").Cells(3, "C").Value
+    End If
+Next k
+    
+   
+Sheets("Home").Activate
+Application.CutCopyMode = False
+ActiveWorkbook.Save
+
+End Sub
